@@ -11,12 +11,22 @@ const homepage_url = "https://allocate.timetable.monash.edu/aplus-2016/student/"
 const cred_store_file = "savedcreds.json";
 var request = require("request").defaults({jar: true});
 var data;
+var groups = [];
 
 var savedCreds = {remember: false};
+
+function encode64(s) {
+	return new Buffer(s).toString("base64");
+}
+
+function decode64(s) {
+	return new Buffer(s, "base64").toString("ascii");
+}
 
 fs.stat(cred_store_file, function (err, stats) {
 	if (!err && stats.isFile()) {
 		savedCreds = JSON.parse(fs.readFileSync(cred_store_file));
+		savedCreds.password = decode64(savedCreds.password);
 	}
 });
 
@@ -32,7 +42,10 @@ ipcMain.on("async-login", function(event, username, password, remember) {
 					password: password,
 					remember: remember
 				};
-				fs.writeFileSync(cred_store_file, JSON.stringify(savedCreds));
+
+				to_write_creds = new Object(savedCreds);
+				to_write_creds.password = encode64(to_write_creds.password);
+				fs.writeFileSync(cred_store_file, JSON.stringify(to_write_creds));
 			} else {
 				fs.stat(cred_store_file, function (err, stats) {
 					if (!err && stats.isFile()) {
