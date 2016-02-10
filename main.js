@@ -6,8 +6,8 @@ const Menu = electron.Menu;
 const MenuItem = electron.MenuItem;
 const app = electron.app;
 const ipcMain = electron.ipcMain;
-const api_url = "https://allocate.timetable.monash.edu/aplus-2016/rest/student/"
-const homepage_url = "https://allocate.timetable.monash.edu/aplus-2016/student/"
+const api_url = "https://allocate.timetable.monash.edu/aplus-2016/rest/student/";
+const homepage_url = "https://allocate.timetable.monash.edu/aplus-2016/student/";
 const cred_store_file = "savedcreds.json";
 var request = require("request").defaults({jar: true});
 var data;
@@ -64,7 +64,7 @@ ipcMain.on("async-login", function(event, username, password, remember) {
 
 ipcMain.on("async-get-data", function (event) {
 	event.sender.send("get-data-reply", data);
-})
+});
 
 ipcMain.on("async-get-savedcreds", function (event) {
 	event.sender.send("get-savedcreds-reply", savedCreds);
