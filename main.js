@@ -12,6 +12,7 @@ const cred_store_file = "savedcreds.json";
 var request = require("request").defaults({jar: true});
 var data;
 var groups = [];
+var all_acts = {};
 
 var savedCreds = {remember: false};
 
@@ -29,6 +30,77 @@ fs.stat(cred_store_file, function (err, stats) {
 		savedCreds.password = decode64(savedCreds.password);
 	}
 });
+
+
+function extractGroups() {
+	groups = [];
+	var subjects = data.student.student_enrolment;
+	for (var subject in subjects) {
+		if (!subjects.hasOwnProperty(subject)) {continue;}
+
+		var groups_data = subjects[subject].groups;
+		for (var group in groups_data) {
+			if (!groups_data.hasOwnProperty(group)) {continue;}
+
+			switch (groups_data[group].status) {
+				case "PREFERENCE ENTRY BY ACTIVITY":
+				case "PREFERENCE ENTRY BY START TIME":
+					groups.push({
+						subject: subject,
+						group: group
+					});
+					break;
+				default:
+					break;
+			}
+		}
+	}
+}
+
+function getActivities() {
+	for (var i = 0; i < groups.length; i++) {
+		request(api_url + data.student.student_code + "/subject/" + groups[i].subject + "/group/" + groups[i].group + "/activities/", function (_, _, activities) {
+			var activities = JSON.parse(activities);
+			var keys = Object.keys(activities);
+			var first_split = keys[0].split("|"); // subject, group, act_code
+			var g = {}; // {key: {repeat: {part: json}}}, eventually becomes {key: [[json, json], [json]]}
+			for (var i = 0; i < keys.length; i++) {
+				var act_code = keys[i].split("|")[2].split("-")
+				var repeat = Number(act_code[0])
+				if (!g.hasOwnProperty(repeat)) {
+					g[repeat] = {};
+				}
+				var part;
+				if (act_code.length == 2) {
+					part = Number(act_code[1].substr(1));
+				} else {
+					part = 1;
+				}
+
+				g[repeat][part] = activities[keys[i]];
+			}
+
+			var repeats = Object.keys(g);
+			for (var i = 0; i < repeats.length; i++) {
+				g[repeats[i]] = listify(g[repeats[i]]);
+			}
+
+			all_acts[first_split[0] + "|" + first_split[1]] = listify(g);
+			if (Object.keys(all_acts).length == groups.length) {
+				console.log(all_acts);
+			}
+		});
+	}
+}
+
+function listify(obj) {
+	var out = [];
+	var keys = Object.keys(obj).sort();
+	for (var i = 0; i < keys.length; i++) {
+		out.push(obj[keys[i]]);
+	}
+	return out;
+}
 
 ipcMain.on("async-login", function(event, username, password, remember) {
 	request.post({url: api_url + "login", form: {username: username, password: password}}, function (_, _, login){
@@ -56,6 +128,8 @@ ipcMain.on("async-login", function(event, username, password, remember) {
 			request = request.defaults({qs: {ss: login.token}});
 			request(homepage_url, function (_, _, homepage){
 				data = JSON.parse(homepage.match(/^data=([^;]+);$/m)[1]);
+				extractGroups();
+				getActivities();
 				event.sender.send("login-reply", true);
 			});
 		}
