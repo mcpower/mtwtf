@@ -195,7 +195,7 @@ function listify(obj) {
 }
 
 ipcMain.on("async-login", function(event, username, password, remember) {
-	request.post({url: api_url + "login", form: {username: username, password: password}}, function (_, _, login){
+	request.post({url: api_url + "login", form: {username: username, password: password}}, function (error, response, login){
 		var login = JSON.parse(login);
 		if (!login.success) {
 			event.sender.send("login-reply", false);
@@ -218,7 +218,7 @@ ipcMain.on("async-login", function(event, username, password, remember) {
 				});
 			}
 			request = request.defaults({qs: {ss: login.token}});
-			request(homepage_url, function (_, _, homepage){
+			request(homepage_url, function (error, response, homepage){
 				data = JSON.parse(homepage.match(/^data=([^;]+);$/m)[1]);
 				extractGroups();
 				getActivities();
