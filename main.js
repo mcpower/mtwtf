@@ -13,6 +13,8 @@ var request = require("request").defaults({jar: true});
 var data;
 var groups = [];
 var all_acts = {};
+var unique_times = {};
+var group_len = [];
 
 var savedCreds = {remember: false};
 
@@ -45,21 +47,20 @@ function extractGroups() {
 			switch (groups_data[group].status) {
 				case "PREFERENCE ENTRY BY ACTIVITY":
 				case "PREFERENCE ENTRY BY START TIME":
-					groups.push({
-						subject: subject,
-						group: group
-					});
+					groups.push(subject + "|" + group);
 					break;
 				default:
 					break;
 			}
 		}
 	}
+	groups.sort();
 }
 
 function getActivities() {
 	for (var i = 0; i < groups.length; i++) {
-		request(api_url + data.student.student_code + "/subject/" + groups[i].subject + "/group/" + groups[i].group + "/activities/", function (_, _, activities) {
+		var split = groups[i].split("|");
+		request(api_url + data.student.student_code + "/subject/" + split[0] + "/group/" + split[1] + "/activities/", function (error, response, activities) {
 			var activities = JSON.parse(activities);
 			var keys = Object.keys(activities);
 			var first_split = keys[0].split("|"); // subject, group, act_code
@@ -85,12 +86,103 @@ function getActivities() {
 				g[repeats[i]] = listify(g[repeats[i]]);
 			}
 
-			all_acts[first_split[0] + "|" + first_split[1]] = listify(g);
-			if (Object.keys(all_acts).length == groups.length) {
-				console.log(all_acts);
+			var activity_key = first_split[0] + "|" + first_split[1];
+			all_acts[activity_key] = listify(g);
+			var times = _.uniqWith(all_acts[activity_key].map(function (repeat) {
+				return _.sortBy(repeat.map(createBlockObj), ["day", "time", "duration"]);
+			}), _.isEqual);
+			unique_times[activity_key] = times;
+			group_len[groups.indexOf(activity_key)] = times.length;
+			if (Object.keys(unique_times).length === groups.length) {
+				console.log(group_len);
+				console.log(getPermutations().length);
 			}
 		});
 	}
+}
+
+function getAllPerms(arr) {
+	if (arr.length === 0) {
+		return [[]];
+	}
+	var out = [];
+	var next = getAllPerms(arr.slice(1));
+	for (var i = 0; i < arr[0]; i++) {
+		for (var j = 0; j < next.length; j++) {
+			out.push([i].concat(next[j]));
+		}
+	}
+	return out;
+}
+
+function getPermutations() {
+	var allPerms = getAllPerms(group_len);
+	var out = [];
+	loop1:
+	for (var i = 0; i < allPerms.length; i++) {
+		var perm = allPerms[i];
+		var activities_per_day = new Array(5);
+		for (var j1 = 0; j1 < 5; j1++) {
+			activities_per_day[j1] = [];
+		}
+		for (var j2 = 0; j2 < perm.length; j2++) {
+			unique_times[groups[j2]][perm[j2]].forEach(function (block) {
+				activities_per_day[block.day].push(block);
+			});
+		}
+
+		for (var j3 = 0; j3 < 5; j3++) {
+			var day = activities_per_day[j3];
+			day.sort(function (a, b) {
+				return a.time - b.time;
+			});
+			for (var k = 1; k < day.length; k++) {
+				if ((day[k].time) < (day[k-1].time + day[k-1].duration)) {
+					continue loop1;
+				}
+			}
+		}
+		out.push(perm);
+	}
+	return out;
+}
+
+function createBlockObj(json) {
+	var day = 0;
+	switch (json.day_of_week) {
+		case "Mon":
+			day = 0;
+			break;
+		case "Tue":
+			day = 1;
+			break;
+		case "Wed":
+			day = 2;
+			break;
+		case "Thu":
+			day = 3;
+			break;
+		case "Fri":
+			day = 4;
+			break;
+		default:
+			console.log("wat");
+	}
+	var time = 0;
+	var hm = json.start_time.split(":").map(Number);
+	if (hm[1] === 0) {
+		time = 2 * (hm[0] - 8);
+	} else if (hm[1] === 30) {
+		time = 2 * (hm[0] - 8) + 1;
+	} else {
+		console.log("Time isn't multiple of 30?")
+	}
+	var duration = Number(json.duration) / 30;
+	return {
+		day: day,
+		time: time,
+		duration: duration
+	};
 }
 
 function listify(obj) {
