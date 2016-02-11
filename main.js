@@ -2,6 +2,7 @@ const fs = require("fs");
 const menubar = require('menubar');
 const path = require('path');
 const electron = require("electron");
+const _ = require("lodash");
 const Menu = electron.Menu;
 const MenuItem = electron.MenuItem;
 const app = electron.app;
