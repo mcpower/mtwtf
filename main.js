@@ -42,6 +42,87 @@ fs.stat(cred_store_file, function (err, stats) {
 	}
 });
 
+function compareMultipleReverse(a, b) {
+	// given two arrays of ints, maximise first, then second, etc.
+	for (var i = 0; i < a.length; i++) {
+		var result = b[i] - a[i];
+		if (result) {
+			return result;
+		}
+	}
+	return 0;
+}
+
+function sortWithKey(arr, key, key_cmp) {
+	var mapped = arr.map(function (el, i) {
+		return {index: i, value: key(el)};
+	});
+
+	mapped.sort(key_cmp);
+
+	return result.map(function (el) {
+		return arr[el.index];
+	});
+}
+
+function over(arr) {
+	// list of functions which take one value -> function which takes one value
+	return function(x) {
+		return arr.map(function(f) {
+			return f(x);
+		});
+	};
+}
+
+function createTimetable(perm) {
+	var timetable = new Array(5);
+	for (var day = 0; day < 5; day++) {
+		timetable[day] = new Array(24);
+	}
+	for (var i = 0; i < perm.length; i++) {
+		var group = groups[i];
+		var activity = unique_times[group][perm[i]];
+		for (var i = 0; i < activity.duration; i++) {
+			timetable[activity.day][activity.time + i] = group;
+		}
+	}
+	var startends = []; // array of objects with .start, .end properties
+	var breaks = []; // array of numbers
+	for (var day = 0; day < 5; day++) {
+		var start = -1;
+		var end = -1;
+		var cur_break = 0;
+		for (var block = 0; block < 24; block++) {
+			// undefined is falsy
+			if (timetable[day][block]) {
+				if (start === -1) {
+					start = block;
+				}
+				end = block;
+				if (cur_break) {
+					breaks.push(cur_break);
+					cur_break = 0;
+				}
+			} else {
+				if (start !== -1) {
+					cur_break++;
+				}
+			}
+		}
+		if ((start !== -1) && (end !== -1)) {
+			startends.push({
+				start: start,
+				end: end
+			});
+		}
+	}
+
+	return {
+		timetable: timetable,
+		startends: startends,
+		breaks: breaks
+	};
+}
 
 function extractGroups() {
 	groups = [];
