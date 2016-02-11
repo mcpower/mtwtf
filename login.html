@@ -44,7 +44,6 @@
 		}
 
 		ipcRenderer.on("get-savedcreds-reply", function(event, creds) {
-			console.log(creds);
 			if (creds.remember) {
 				form.username.value = creds.username;
 				form.password.value = creds.password;
