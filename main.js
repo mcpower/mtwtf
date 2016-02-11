@@ -16,8 +16,16 @@ var groups = [];
 var all_acts = {};
 var unique_times = {};
 var group_len = [];
+var perms = []
 
 var savedCreds = {remember: false};
+
+var mb = menubar({
+	skipTaskbar: true,
+	width: 400,
+	height: 500,
+	index: "file://" + path.join(app.getAppPath(), 'login.html')
+});
 
 function encode64(s) {
 	return new Buffer(s).toString("base64");
@@ -95,11 +103,15 @@ function getActivities() {
 			unique_times[activity_key] = times;
 			group_len[groups.indexOf(activity_key)] = times.length;
 			if (Object.keys(unique_times).length === groups.length) {
-				console.log(group_len);
-				console.log(getPermutations().length);
+				activitiesRetrieved();
 			}
 		});
 	}
+}
+
+function activitiesRetrieved() {
+	perms = getPermutations();
+	mb.window.webContents.send("receive-num-noclashperms", perms.length);
 }
 
 function getAllPerms(arr) {
@@ -235,13 +247,6 @@ ipcMain.on("async-get-data", function (event) {
 
 ipcMain.on("async-get-savedcreds", function (event) {
 	event.sender.send("get-savedcreds-reply", savedCreds);
-});
-
-var mb = menubar({
-	skipTaskbar: true,
-	width: 400,
-	height: 500,
-	index: "file://" + path.join(app.getAppPath(), 'login.html')
 });
 
 mb.on('ready', function() {
