@@ -2,6 +2,10 @@
 <html>
 <head>
 	<title>Post-login</title>
+</head>
+<body>
+	<h1>Hello, <span id="user">user</span>.</h1>
+	<div id="status">Sit tight, we're finding your timetables.</div>
 	<script type="text/javascript">
 		const ipcRenderer = require('electron').ipcRenderer;
 		ipcRenderer.on("get-data-reply", function (event, data) {
@@ -10,12 +14,6 @@
 		ipcRenderer.on("receive-num-noclashperms", function (event, perms) {
 			document.getElementById("status").innerHTML = "We found " + perms + " timetables without clashes.";
 		});
-	</script>
-</head>
-<body>
-	<h1>Hello, <span id="user">user</span>.</h1>
-	<div id="status">Sit tight, we're finding your timetables.</div>
-	<script type="text/javascript">
 		ipcRenderer.send("async-get-data");
 	</script>
 </body>
