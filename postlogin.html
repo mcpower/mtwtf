@@ -1,11 +1,17 @@
 <!DOCTYPE html>
 <html>
 <head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>Post-login</title>
+	<link href="node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-	<h1>Hello, <span id="user">user</span>.</h1>
-	<div id="status">Sit tight, we're finding your timetables.</div>
+	<div class="container">
+		<h1>Hello, <span id="user">user</span>.</h1>
+		<div id="status">Sit tight, we're finding your timetables.</div>
+	</div>
 	<script type="text/javascript">
 		const ipcRenderer = require('electron').ipcRenderer;
 		ipcRenderer.on("get-data-reply", function (event, data) {

@@ -4,7 +4,8 @@
   "dependencies": {
     "menubar": "^3.0.0",
     "request": "^2.69.0",
-    "lodash": "^4.3.0"
+    "lodash": "^4.3.0",
+    "bootstrap": "^3.3.6"
   },
   "devDependencies": {
     "electron-prebuilt": "^0.36.0"
