@@ -190,6 +190,56 @@ function getActivities() {
 	}
 }
 
+function time(timeString) {
+	var out = -16;
+	timeString = timeString.toLowerCase().trim();
+	var hour = Number(timeString.split(":")[0]);
+	if (timeString.endsWith("am")) {
+		if (hour < 8) {
+			console.log("Time is before 8am");
+			return;
+		}
+		timeString = timeString.slice(0, -2).trim();
+	} else if (timeString.endsWith("pm")) {
+		if (hour >= 8 && hour != 12) {
+			console.log("Time exceeds 8pm");
+			return;
+		}
+		timeString = timeString.slice(0, -2).trim();
+		if (!timeString.startsWith("12")) {
+			out += 24;
+		}
+	} else {
+		if (hour < 8) {
+			out += 24;
+		}
+	}
+
+	var timeSplit = timeString.split(":").map(Number);
+
+	if (timeSplit.length > 2) {
+		console.log("More than 2 colons found in time");
+		return;
+	}
+
+	if (timeSplit.length == 2) {
+		switch (timeSplit[1]) {
+			case 30:
+				out++;
+				break;
+			case 0:
+				break;
+			default:
+				console.log("Minutes is not 00 or 30");
+				return
+		}
+	}
+
+	out += timeSplit[0] * 2;
+
+	return out;
+}
+
 function activitiesRetrieved() {
 	perms = getPermutations();
 	mb.window.webContents.send("receive-num-noclashperms", perms.length);
