@@ -194,7 +194,7 @@ function getActivities() {
 	}
 }
 
-function time(timeString) {
+function toBlocks(timeString) {
 	var out = -16;
 	timeString = timeString.toLowerCase().trim();
 	var hour = Number(timeString.split(":")[0]);
@@ -243,10 +243,11 @@ function time(timeString) {
 
 	return out;
 }
+global["toBlocks"] = toBlocks;
 
 function activitiesRetrieved() {
 	perms = getPermutations();
-	mb.window.webContents.send("receive-num-noclashperms", perms.length);
+	mb.window.webContents.send("after-perms", perms.length, createTimetable(perms[0]));
 }
 
 function getAllPerms(arr) {

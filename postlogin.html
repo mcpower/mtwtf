@@ -6,19 +6,256 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>Post-login</title>
 	<link href="node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+	<link href="node_modules/dragula/dist/dragula.min.css" rel="stylesheet">
+	<link href="node_modules/codemirror/lib/codemirror.css" rel="stylesheet">
+	<style type="text/css">
+		#drag > li {
+			cursor: move;
+			cursor: grab;
+			cursor: -moz-grab;
+			cursor: -webkit-grab;
+		}
+		.gu-mirror {
+			cursor: grabbing;
+			cursor: -moz-grabbing;
+			cursor: -webkit-grabbing;
+		}
+		.glyphicon {
+			pointer-events: none;
+		}
+	</style>
 </head>
 <body>
 	<div class="container">
 		<h1>Hello, <span id="user">user</span>.</h1>
-		<div id="status">Sit tight, we're finding your timetables.</div>
+		<div id="status">Sit tight, we're finding your timetables. The program may appear to be unresponsive.</div>
+		<div id="sorting" style="display: none;">
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					How timetables are sorted
+					<button class="btn btn-default btn-xs pull-right" id="add-function">Add function</button>
+				</div>
+				<ul class="list-group" id="drag">
+				</ul>
+			</div>
+			<button class="btn btn-primary" id="sort-btn">Sort!</button>
+		</div>
+	</div>
+
+	<div class="modal fade" id="edit" tabindex="-1" role="dialog">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+					<h4 class="modal-title">Edit function</h4>
+				</div>
+				<div class="modal-body">
+					<form>
+						<div class="form-group">
+							<label>Function name</label>
+							<input type="text" class="form-control" id="function-name">
+						</div>
+						<div class="form-group">
+							<label>Function body</label>
+							<textarea class="form-control" rows="5" id="function-body">Loading text editor...</textarea>
+							<button class="btn btn-info" id="function-try" type="button">Try function</button> <span id="function-result" class="label label-danger"></span>
+							<div class="help-block">
+								<button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#help-collapse">Show help</button>
+								<div class="collapse" id="help-collapse">
+									<div>This function takes in a timetable and returns a number to compare timetables, like a "score".</div>
+									<div>Available to this function are:</div>
+									<ul>
+										<li><code>t.timetable</code>: a 5 (days) &times; 24 (blocks of 30 minutes from 8am to 8pm) array of either <code>""</code> or a pipe-delimited string like <code>"FIT1045_CL_S1_DAY|Lecture"</code></li>
+										<li><code>t.startends</code>: an array of objects (days) which have <code>start</code> and <code>end</code> properties, representing the index of the first and last block of a day. A day with no classes will not have an object, so the overall length of <code>t.startends</code> may be less than five.</li>
+										<li><code>t.breaks</code>: an array of numbers, representing the length of a break in blocks</li>
+										<li><code>_</code>: the <code>lodash</code> library</li>
+										<li><code>toBlocks</code>: helper function which takes in a string like <code>"3:30pm"</code> to a block index</li>
+									</ul>
+									<div>All of the above are currently loaded in the window. Press <kbd><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>I</kbd></kbd> to load the developer tools if you wish to inspect these for yourself (you should probably resize the window!)</div>
+								</div>
+							</div>
+						</div>
+						<div class="form-group">
+							<div class="radio">
+								<label>
+									<input type="radio" name="minmax" id="function-min" value="min" checked>
+									Minimise return value
+								</label>
+							</div>
+							<div class="radio">
+								<label>
+									<input type="radio" name="minmax" id="function-max" value="max">
+									Maximise return value
+								</label>
+							</div>
+						</div>
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+					<button type="button" class="btn btn-danger" id="delete">Delete</button>
+					<button type="button" class="btn btn-primary" id="save">Save changes</button>
+				</div>
+			</div>
+		</div>
 	</div>
 	<script type="text/javascript">
+		var remote = require("electron").remote;
+		var toBlocks = remote.getGlobal("toBlocks");
+		var jQuery = require("jquery");
+		var $ = jQuery;
+		var _ = require("lodash");
+		var dragula = require("dragula");
+		var CodeMirror = require("codemirror");
+		var t;
+		require("./node_modules/codemirror/mode/javascript/javascript.js");
+		require("bootstrap");
 		const ipcRenderer = require('electron').ipcRenderer;
+		dragula([document.getElementById("drag")], {
+			moves: function (el, container, handle) {
+				return handle.tagName !== "BUTTON";
+			}
+		});
+		var editor;
+		var last;
+		$("#edit").on("show.bs.modal", function (event) {
+			last = event.relatedTarget.parentElement.parentElement;
+			document.getElementById("function-name").value = last.dataset.functionName;
+			document.getElementById("function-" + last.dataset.functionMinmax).checked = true;
+			$("#function-result").text("");
+		});
+		$("#edit").on("shown.bs.modal", function (event) {
+			if (typeof editor === "undefined") {
+				editor = CodeMirror.fromTextArea(document.getElementById("function-body"), {
+					mode: "javascript",
+					lineNumbers: true
+				});
+			}
+			editor.setValue(event.relatedTarget.parentElement.parentElement.dataset.functionBody);
+		});
+
+		function updateDisplay(element) {
+			var prettyString;
+			switch (element.dataset.functionMinmax) {
+				case "min":
+					prettyString = "Minimise";
+					$(element).removeClass("list-group-item-warning").addClass("list-group-item-info");
+					break;
+				case "max":
+					prettyString = "Maximise";
+					$(element).removeClass("list-group-item-info").addClass("list-group-item-warning");
+					break;
+				default:
+					break;
+			}
+			prettyString += ' "' + element.dataset.functionName + '"';
+			element.childNodes[0].nodeValue = prettyString;
+		}
+
+		function createFunction(data) {
+			if (typeof data === "undefined") {
+				data = {
+					functionName: "new function",
+					functionBody: "return 1;",
+					functionMinmax: "min"
+				};
+			}
+			var elem = $('<li class="list-group-item"> <span class="pull-right"><button class="btn btn-default btn-xs" data-toggle="modal" data-target="#edit"><span class="glyphicon glyphicon-edit"></span></button><span class="glyphicon glyphicon-resize-vertical"></span></span></li>');
+			var d = elem[0].dataset;
+			d.functionName = data.functionName;
+			d.functionBody = data.functionBody;
+			d.functionMinmax = data.functionMinmax;
+			updateDisplay(elem[0]);
+			$("#drag").append(elem);
+			return elem[0];
+		}
+
+		$("#save").click(function (event) {
+			last.dataset.functionName = document.getElementById("function-name").value;
+			last.dataset.functionBody = editor.getValue();
+			last.dataset.functionMinmax = $('input[name="minmax"]:checked').val();
+			updateDisplay(last);
+		});
+		$("#delete").click(function (event) {
+			$("#edit").modal("hide");
+			document.getElementById("drag").removeChild(last);
+		});
+		$("#function-try").click(function (event) {
+			var f = new Function(editor.getValue());
+			var resultDisplay;
+			try {
+				var result = f();
+				if (typeof result !== "number") {
+					resultDisplay = "Success, but not a number: " + result;
+				} else {
+					resultDisplay = "Success! " + result;
+				}
+				$("#function-result").removeClass("label-danger").addClass("label-success");
+			}
+			catch (e) {
+				resultDisplay = e.toString();
+				$("#function-result").removeClass("label-success").addClass("label-danger");
+			}
+			$("#function-result").text(resultDisplay);
+		});
+		$("#add-function").click(function (event) {
+			createFunction();
+		});
+		$("#sort-btn").click(function (event) {
+			var functions = _.map(document.getElementById("drag").children, "dataset");
+			console.log(functions);
+		});
+
+		$(document).ready(function () {
+			var presetFunctions = [
+				{
+					functionName: "days starting before 9:30am",
+					functionBody: `return _(t.startends).map((se) => se.start < toBlocks("9:30am")).sum();`,
+					functionMinmax: "min"
+				}, {
+					functionName: "days ending after 6pm",
+					functionBody: `return _(t.startends).map((se) => se.end >= toBlocks("6pm")).sum();`,
+					functionMinmax: "min"
+				}, {
+					functionName: "days spent on campus",
+					functionBody: `return t.startends.length;`,
+					functionMinmax: "min"
+				}, {
+					functionName: "the variance of contact hours",
+					functionBody: `var contactHours =  _(t.timetable).map((day) => _(day).map(Boolean).sum()).filter().value();
+var n = contactHours.length;
+var sum = 0;
+var sumSq = 0;
+for (var i = 0; i < n; i++) {
+  sum += contactHours[i];
+  sumSq += contactHours[i] * contactHours[i];
+}
+return (sumSq - (sum * sum) / n) / n;`,
+					functionMinmax: "min"
+				}, {
+					functionName: "total day lengths",
+					functionBody: `return _(t.startends).map((se) => se.end - se.start).sum();`,
+					functionMinmax: "min"
+				}, {
+					functionName: "starting hours",
+					functionBody: `return _(t.startends).map("start").sum();`,
+					functionMinmax: "max"
+				}, {
+					functionName: "the length of breaks, squared",
+					functionBody: `return _(t.breaks).map((x) => x*x).sum();`,
+					functionMinmax: "max"
+				}
+			];
+			presetFunctions.map(createFunction);
+		});
+
 		ipcRenderer.on("get-data-reply", function (event, data) {
 			document.getElementById("user").innerHTML = data.student.first_name + " " + data.student.last_name;
 		});
-		ipcRenderer.on("receive-num-noclashperms", function (event, perms) {
-			document.getElementById("status").innerHTML = "We found " + perms + " timetables without clashes.";
+		ipcRenderer.on("after-perms", function (event, numperms, example) {
+			document.getElementById("status").innerHTML = "We found " + numperms + " timetables without clashes.";
+			t = example;
+			$("#sorting").show();
 		});
 		ipcRenderer.send("async-get-data");
 	</script>
