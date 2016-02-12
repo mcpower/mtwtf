@@ -58,7 +58,7 @@
 						<div class="form-group">
 							<label>Function body</label>
 							<textarea class="form-control" rows="5" id="function-body">Loading text editor...</textarea>
-							<button class="btn btn-info" id="function-try" type="button">Try function</button> <span id="function-result" class="label label-danger"></span>
+							<button class="btn btn-warning" id="toggle-devtools" type="button">Toggle DevTools</button> <button class="btn btn-info" id="function-try" type="button">Try function</button> <span id="function-result" class="label label-danger"></span>
 							<div class="help-block">
 								<button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#help-collapse">Show help</button>
 								<div class="collapse" id="help-collapse">
@@ -71,7 +71,7 @@
 										<li><code>_</code>: the <code>lodash</code> library</li>
 										<li><code>toBlocks</code>: helper function which takes in a string like <code>"3:30pm"</code> to a block index</li>
 									</ul>
-									<div>All of the above are currently loaded in the window. Press <kbd><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>I</kbd></kbd> to load the developer tools if you wish to inspect these for yourself (you should probably resize the window!)</div>
+									<div>All of the above are currently loaded in the window, so you can use the DevTools to do some live testing. (you should probably resize the window though!)</div>
 								</div>
 							</div>
 						</div>
@@ -102,6 +102,7 @@
 	<script type="text/javascript">
 		var remote = require("electron").remote;
 		var toBlocks = remote.getGlobal("toBlocks");
+		var webContents = remote.getCurrentWebContents();
 		var jQuery = require("jquery");
 		var $ = jQuery;
 		var _ = require("lodash");
@@ -197,6 +198,9 @@
 				$("#function-result").removeClass("label-success").addClass("label-danger");
 			}
 			$("#function-result").text(resultDisplay);
+		});
+		$("#toggle-devtools").click(function (event) {
+			webContents.toggleDevTools();
 		});
 		$("#add-function").click(function (event) {
 			createFunction();
