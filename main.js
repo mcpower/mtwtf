@@ -78,13 +78,17 @@ function createTimetable(perm) {
 	var timetable = new Array(5);
 	for (var day = 0; day < 5; day++) {
 		timetable[day] = new Array(24);
+		for (var block = 0; block < 24; block++) {
+			timetable[day][block] = "";
+		};
 	}
 	for (var i = 0; i < perm.length; i++) {
 		var group = groups[i];
-		var activity = unique_times[group][perm[i]];
-		for (var i = 0; i < activity.duration; i++) {
-			timetable[activity.day][activity.time + i] = group;
-		}
+		unique_times[group][perm[i]].forEach(function (activity) {
+			for (var j = 0; j < activity.duration; j++) {
+				timetable[activity.day][activity.time + j] = group;
+			}
+		});
 	}
 	var startends = []; // array of objects with .start, .end properties
 	var breaks = []; // array of numbers
