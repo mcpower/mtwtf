@@ -16,7 +16,7 @@ var groups = [];
 var all_acts = {};
 var unique_times = {};
 var group_len = [];
-var perms = []
+var perms = [];
 
 var savedCreds = {remember: false};
 
@@ -58,18 +58,41 @@ function sortWithKey(arr, key, key_cmp) {
 		return {index: i, value: key(el)};
 	});
 
-	mapped.sort(key_cmp);
+	mapped.sort(function (a, b) {
+		return key_cmp(a.value, b.value);
+	});
 
-	return result.map(function (el) {
+	return mapped.map(function (el) {
 		return arr[el.index];
 	});
 }
 
-function over(arr) {
-	// list of functions which take one value -> function which takes one value
-	return function(x) {
-		return arr.map(function(f) {
-			return f(x);
+function modifyFunction(func, mult) {
+	return function (t, underscore) {
+		return mult * func(t, underscore);
+	}
+}
+
+function createFunctionFromStrmaps(arr) {
+	var functions = arr.map(function (strmap) {
+		var mult;
+		switch (strmap.functionMinmax) {
+			case "min":
+				mult = -1;
+				break;
+			case "max":
+				mult = 1;
+				break;
+			default:
+				mult = 0;
+				break;
+		}
+		return modifyFunction(new Function("t", "_", strmap.functionBody), mult); // closure should mean function is not reinitialised each time
+	});
+	return function (x) {
+		var timetable = createTimetable(x);
+		return functions.map(function (f) {
+			return f(timetable, _);
 		});
 	};
 }
@@ -383,6 +406,12 @@ ipcMain.on("async-get-data", function (event) {
 
 ipcMain.on("async-get-savedcreds", function (event) {
 	event.sender.send("get-savedcreds-reply", savedCreds);
+});
+
+ipcMain.on("async-sort", function (event, functions) {
+	var keyFunc = createFunctionFromStrmaps(functions);
+	perms = sortWithKey(perms, keyFunc, compareMultipleReverse);
+	event.sender.send("sort-reply");
 });
 
 mb.on('ready', function() {

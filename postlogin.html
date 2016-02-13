@@ -207,7 +207,7 @@
 		});
 		$("#sort-btn").click(function (event) {
 			var functions = _.map(document.getElementById("drag").children, "dataset");
-			console.log(functions);
+			ipcRenderer.send("async-sort", functions);
 		});
 
 		$(document).ready(function () {
