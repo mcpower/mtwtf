@@ -22,8 +22,8 @@ var savedCreds = {remember: false};
 
 var mb = menubar({
 	skipTaskbar: true,
-	width: 400,
-	height: 500,
+	width: 500,
+	height: 700,
 	index: "file://" + path.join(app.getAppPath(), 'login.html')
 });
 
