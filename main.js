@@ -288,6 +288,11 @@ function getAllPerms(arr) {
 }
 
 function getPermutations() {
+	var numPerms = group_len.reduce((a, b) => a*b);
+	if (numPerms > 5000000) {
+		mb.window.webContents.executeJavaScript('alert("We found ' + numPerms + ' timetable permutations. This would take way too long, so we\'re stopping right now. You should try Will\'s timetabler at will.io/timetables instead.");');
+		return [[]];
+	}
 	var allPerms = getAllPerms(group_len);
 	var out = [];
 	loop1:
