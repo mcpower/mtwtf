@@ -15,6 +15,12 @@
 	</style>
 </head>
 <body>
+	<div class="alert alert-info fade in" role="alert">
+		<button type="button" class="close" data-dismiss="alert">
+			<span>&times;</span>
+		</button>
+		<strong>Tip!</strong> Use left and right arrow keys to quickly go through timetables.
+	</div>
 	<h1>
 		Timetable <span id="timetable-index">1</span>
 		<div class="pull-right"><button class="btn btn-default" id="prev" disabled>&larr;</button> <button class="btn btn-default" id="next">&rarr;</button></div>
@@ -25,6 +31,7 @@
 		var jQuery = require("jquery");
 		var $ = jQuery;
 		var moment = require("moment");
+		require("bootstrap");
 		require("fullcalendar");
 		var _ = require("lodash");
 		var current_index = 0;
