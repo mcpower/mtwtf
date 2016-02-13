@@ -28,7 +28,8 @@
 		var jQuery = require("jquery");
 		var $ = jQuery;
 		var moment = require("moment");
-		var fullcalendar = require("fullcalendar");
+		require("fullcalendar");
+		var _ = require("lodash");
 		var current_index = 0;
 		var perms, unique_times, groups;
 		var result = ipcRenderer.sendSync("sync-get-timetables");
@@ -41,12 +42,32 @@
 			return moment({h: ((block >> 1) + 8), m: ((block & 1) * 30)}).day(day + 1);
 		}
 
-
-		function getEvent(activity, title) {
+		function getEventTimes(activity) {
 			return {
-				title: title,
 				start: toMoment(activity.day, activity.time),
 				end: toMoment(activity.day, activity.time + activity.duration)
+			};
+		}
+
+		function numberMap(x, in_min, in_max, out_min, out_max) {
+			return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min; // taken from Arduino :P
+		}
+
+		var split_groups = groups.map(function (group) {
+			return group.split("|");
+		});
+		var subject_hues = _(split_groups).map(0).uniq().map((val, index, collection) => [val, numberMap(index, 0, collection.length, 0, 360)]).fromPairs().value();
+		var group_lightness = _(split_groups).map(1).uniq().pull("Lecture").map((val, index, collection) => [val, numberMap(index, 0, collection.length - 1, 30, 70)]).fromPairs().value();
+		group_lightness["Lecture"] = 10;
+
+		function getColours(key) {
+			var split = key.split("|");
+			var hue = subject_hues[split[0]];
+			var lightness = group_lightness[split[1]];
+			var textColor = lightness < 50 ? "white" : "black";
+			return {
+				color: "hsl(" + hue + ", 100%, " + lightness + "%)",
+				textColor: textColor
 			};
 		}
 
@@ -57,7 +78,7 @@
 				var prettyName = split.join("\n");
 				unique_times_events[key] = unique_times[key].map(function(big_arr) {
 					return big_arr.map(function(activity) {
-						return getEvent(activity, prettyName);
+						return _.assign({title: prettyName}, getEventTimes(activity), getColours(key));
 					});
 				});
 			}
