@@ -1,7 +1,7 @@
 {
   "name": "MTWTF",
   "description": "Monash timetable finder / timetable viewer in tray",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "repository": {
     "type": "git",
     "url": "https://github.com/mcpower/mtwtf.git"
