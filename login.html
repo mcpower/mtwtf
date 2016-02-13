@@ -28,7 +28,7 @@
 		</form>
 	</div>
 	<script type="text/javascript">
-		const ipcRenderer = require('electron').ipcRenderer;
+		const ipcRenderer = require("electron").ipcRenderer;
 		var $ = require("jquery");
 		var form = document.getElementById("login");
 
@@ -45,7 +45,7 @@
 			event.preventDefault();
 		});
 
-		ipcRenderer.on("get-savedcreds-reply", function(event, creds) {
+		ipcRenderer.on("get-savedcreds-reply", function (event, creds) {
 			if (creds.remember) {
 				form.username.value = creds.username;
 				form.password.value = creds.password;

@@ -111,7 +111,7 @@
 		var t;
 		require("./node_modules/codemirror/mode/javascript/javascript.js");
 		require("bootstrap");
-		const ipcRenderer = require('electron').ipcRenderer;
+		const ipcRenderer = require("electron").ipcRenderer;
 		dragula([document.getElementById("drag")], {
 			moves: function (el, container, handle) {
 				return handle.tagName !== "BUTTON";
@@ -174,7 +174,7 @@
 		$("#save").click(function (event) {
 			last.dataset.functionName = document.getElementById("function-name").value;
 			last.dataset.functionBody = editor.getValue();
-			last.dataset.functionMinmax = $('input[name="minmax"]:checked').val();
+			last.dataset.functionMinmax = $("input[name='minmax']:checked").val();
 			updateDisplay(last);
 		});
 		$("#delete").click(function (event) {

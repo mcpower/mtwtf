@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<meta charset='utf-8'>
+	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<title>Timetables</title>
 	<link href="node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
-	<link href='node_modules/fullcalendar/dist/fullcalendar.min.css' rel='stylesheet'>
+	<link href="node_modules/fullcalendar/dist/fullcalendar.min.css" rel="stylesheet">
 	<style>
 	#calendar {
 		max-width: 800px;
@@ -24,7 +24,7 @@
 		</ul>
 	</nav>
 	<script>
-		const ipcRenderer = require('electron').ipcRenderer;
+		const ipcRenderer = require("electron").ipcRenderer;
 		var jQuery = require("jquery");
 		var $ = jQuery;
 		var moment = require("moment");
@@ -84,7 +84,7 @@
 		}
 
 		function updateDisplay() {
-			$('#calendar').fullCalendar("refetchEvents");
+			$("#calendar").fullCalendar("refetchEvents");
 			if (current_index === 0) {
 				document.getElementById("prev").disabled = true;
 			} else if (current_index === perms.length - 1) {
@@ -97,7 +97,7 @@
 		}
 
 
-		$('#calendar').fullCalendar({
+		$("#calendar").fullCalendar({
 			defaultView: "agendaWeek",
 			header: false,
 			minTime: "08:00",
@@ -114,7 +114,7 @@
 		});
 		$("#prev").click(decrement);
 		$("#next").click(increment);
-		$(document).keydown(function(event) {
+		$(document).keydown(function (event) {
 			switch (event.keyCode) {
 			case 37:
 			case 38:

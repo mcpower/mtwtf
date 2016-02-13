@@ -1,6 +1,6 @@
 const fs = require("fs");
-const menubar = require('menubar');
-const path = require('path');
+const menubar = require("menubar");
+const path = require("path");
 const electron = require("electron");
 const _ = require("lodash");
 const Menu = electron.Menu;
@@ -24,7 +24,7 @@ var mb = menubar({
 	skipTaskbar: true,
 	width: 500,
 	height: 700,
-	index: "file://" + path.join(app.getAppPath(), 'login.html')
+	index: "file://" + path.join(app.getAppPath(), "login.html")
 });
 
 function encode64(s) {
@@ -366,8 +366,8 @@ function listify(obj) {
 	return out;
 }
 
-ipcMain.on("async-login", function(event, username, password, remember) {
-	request.post({url: api_url + "login", form: {username: username, password: password}}, function (error, response, login){
+ipcMain.on("async-login", function (event, username, password, remember) {
+	request.post({url: api_url + "login", form: {username: username, password: password}}, function (error, response, login) {
 		var login = JSON.parse(login);
 		if (!login.success) {
 			event.sender.send("login-reply", false);
@@ -390,7 +390,7 @@ ipcMain.on("async-login", function(event, username, password, remember) {
 				});
 			}
 			request = request.defaults({qs: {ss: login.token}});
-			request(homepage_url, function (error, response, homepage){
+			request(homepage_url, function (error, response, homepage) {
 				data = JSON.parse(homepage.match(/^data=([^;]+);$/m)[1]);
 				extractGroups();
 				getActivities();
@@ -418,7 +418,7 @@ ipcMain.on("sync-get-timetables", function (event) {
 	event.returnValue = [perms, unique_times, groups];
 });
 
-mb.on('ready', function() {
+mb.on("ready", function () {
 	var menu = Menu.buildFromTemplate([
 		{label: "Exit", click: function () {app.quit()}}
 	]);
