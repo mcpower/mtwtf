@@ -9,7 +9,7 @@
 </head>
 <body>
 	<div class="container">
-		<form id="login" onsubmit="return login()">
+		<form id="login">
 			<div class="form-group">
 				<label for="username">Username</label>
 				<input type="text" class="form-control" id="username" placeholder="username">
@@ -28,6 +28,7 @@
 	</div>
 	<script type="text/javascript">
 		const ipcRenderer = require('electron').ipcRenderer;
+		var $ = require("jquery");
 		var form = document.getElementById("login");
 
 		ipcRenderer.on("login-reply", function (event, success) {
@@ -38,10 +39,10 @@
 			}
 		});
 
-		function login() {
+		$("#login").submit(function (event) {
 			ipcRenderer.send("async-login", form.username.value, form.password.value, form.remember.checked);
-			return false;
-		}
+			event.preventDefault();
+		});
 
 		ipcRenderer.on("get-savedcreds-reply", function(event, creds) {
 			if (creds.remember) {
