@@ -1,6 +1,7 @@
 {
   "name": "MTWTF",
   "version": "1.0.0",
+  "license": "MIT",
   "dependencies": {
     "menubar": "^3.0.0",
     "request": "^2.69.0",
