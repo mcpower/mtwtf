@@ -15,14 +15,11 @@
 	</style>
 </head>
 <body>
-	<h1>Timetable <span id="timetable-index">1</span></h1>
+	<h1>
+		Timetable <span id="timetable-index">1</span>
+		<div class="pull-right"><button class="btn btn-default" id="prev" disabled>&larr;</button> <button class="btn btn-default" id="next">&rarr;</button></div>
+	</h1>
 	<div id="calendar"></div>
-	<nav>
-		<ul class="pager">
-			<li><button class="btn btn-default" id="prev" disabled>Previous</button></li>
-			<li><button class="btn btn-default" id="next">Next</button></li>
-		</ul>
-	</nav>
 	<script>
 		const ipcRenderer = require("electron").ipcRenderer;
 		var jQuery = require("jquery");
