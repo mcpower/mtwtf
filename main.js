@@ -414,6 +414,10 @@ ipcMain.on("async-sort", function (event, functions) {
 	event.sender.send("sort-reply");
 });
 
+ipcMain.on("sync-get-timetables", function (event) {
+	event.returnValue = [perms, unique_times, groups];
+});
+
 mb.on('ready', function() {
 	var menu = Menu.buildFromTemplate([
 		{label: "Exit", click: function () {app.quit()}}

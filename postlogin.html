@@ -205,6 +205,9 @@
 		$("#add-function").click(function (event) {
 			createFunction();
 		});
+		ipcRenderer.on("sort-reply", function (event) {
+			document.location.href = "timetableviewer.html";
+		});
 		$("#sort-btn").click(function (event) {
 			var functions = _.map(document.getElementById("drag").children, "dataset");
 			ipcRenderer.send("async-sort", functions);

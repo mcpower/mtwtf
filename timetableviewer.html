@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Timetables</title>
+	<meta charset='utf-8' />
+	<link href='node_modules/fullcalendar/dist/fullcalendar.min.css' rel='stylesheet' />
+	<style>
+	body {
+		margin: 0px;
+		padding: 0;
+		font-family: "Lucida Grande",Helvetica,Arial,Verdana,sans-serif;
+		font-size: 12px;
+	}
+
+	#calendar {
+		max-width: 800px;
+		margin: 0 auto;
+	}
+	</style>
+</head>
+<body>
+	<div id="calendar"></div>
+	<button id="prev">Previous</button><button id="next">Next</button>
+	<script>
+		const ipcRenderer = require('electron').ipcRenderer;
+		var jQuery = require("jquery");
+		var $ = jQuery;
+		var moment = require("moment");
+		var fullcalendar = require("fullcalendar");
+		var current_index = 0;
+		var perms, unique_times, groups;
+		var result = ipcRenderer.sendSync("sync-get-timetables");
+		perms = result[0];
+		unique_times = result[1];
+		groups = result[2];
+		var unique_times_events = {};
+
+		function toMoment(day, block) {
+			return moment({h: ((block >> 1) + 8), m: ((block & 1) * 30)}).day(day + 1);
+		}
+
+
+		function getEvent(activity, title) {
+			return {
+				title: title,
+				start: toMoment(activity.day, activity.time),
+				end: toMoment(activity.day, activity.time + activity.duration)
+			};
+		}
+
+		for (var key in unique_times) {
+			if (unique_times.hasOwnProperty(key)) {
+				var prettyName = key.replace("|", "\n");
+				unique_times_events[key] = unique_times[key].map(function(big_arr) {
+					return big_arr.map(function(activity) {
+						return getEvent(activity, prettyName);
+					});
+				});
+			}
+		}
+
+		function get_events(callback) {
+			var events = [];
+			for (var i = 0; i < groups.length; i++) {
+				var key = groups[i];
+				var to_concat = unique_times_events[key][perms[current_index][i]];
+				events = events.concat(to_concat);
+			};
+			callback(events);
+		}
+
+
+		function decrement() {
+			if (current_index !== 0) {
+				current_index--;
+				$('#calendar').fullCalendar("refetchEvents");
+			}
+		}
+
+		function increment() {
+			if (current_index !== perms.length - 1) {
+				current_index++;
+				$('#calendar').fullCalendar("refetchEvents");
+			}
+		}
+
+
+		$('#calendar').fullCalendar({
+			defaultView: "agendaWeek",
+			header: false,
+			minTime: "08:00",
+			maxTime: "20:00",
+			weekends: false,
+			allDaySlot: false,
+			contentHeight: "auto",
+			// columnFormat: "ddd",
+			displayEventTime: false,
+			nowIndicator: true,
+			events: function(start, end, timezone, callback) {
+				get_events(callback);
+			}
+		});
+		$("#prev").click(decrement);
+		$("#next").click(increment);
+		$(document).keydown(function(event) {
+			switch (event.keyCode) {
+			case 37:
+			case 38:
+				decrement();
+				break;
+			case 39:
+			case 40:
+				increment();
+				break;
+			default:
+				return;
+			}
+		});
+	</script>
+</body>
+</html>
